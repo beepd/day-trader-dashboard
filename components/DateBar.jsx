@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { todayISO, toISO } from '../lib/utils'
+import { todayISO, toLocalDateISO } from '../lib/utils'
 
 export default function DateBar({ date, marketClosed }) {
   const router = useRouter()
@@ -16,13 +16,13 @@ export default function DateBar({ date, marketClosed }) {
   function prev() {
     const d = new Date(date + 'T00:00:00')
     d.setDate(d.getDate() - 1)
-    navigate(toISO(d))
+    navigate(toLocalDateISO(d))
   }
 
   function next() {
     const d = new Date(date + 'T00:00:00')
     d.setDate(d.getDate() + 1)
-    const n = toISO(d)
+    const n = toLocalDateISO(d)
     if (n <= today) navigate(n)
   }
 
