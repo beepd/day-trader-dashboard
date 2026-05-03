@@ -1,7 +1,5 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import DateBar from './DateBar'
 import MetricCard from './MetricCard'
 import TradesTable from './TradesTable'
@@ -11,14 +9,11 @@ import StrategyPanel from './StrategyPanel'
 import BalanceLedger from './BalanceLedger'
 import Charts from './Charts'
 import ChartLoader from './ChartLoader'
-import { computeMetrics, fmt, fmtPnl, fmtPct, todayISO } from '../lib/utils'
+import { computeMetrics, fmt, fmtPnl, fmtPct } from '../lib/utils'
 
+/** Props come from the server on each navigation (do not copy into useState or date changes stay stale). */
 export default function Dashboard({ initialData, initialDate }) {
-  const [data, setData] = useState(initialData)
-  const [date, setDate] = useState(initialDate)
-  const router = useRouter()
-
-  const { trades, research, analysis, strategy, balHistory, todayBal, prevBal } = data
+  const { trades, research, analysis, strategy, balHistory, todayBal, prevBal } = initialData
   const m = computeMetrics(trades, todayBal, prevBal)
 
   return (
@@ -42,7 +37,7 @@ export default function Dashboard({ initialData, initialDate }) {
         </div>
 
         {/* Date Bar */}
-        <DateBar date={date} />
+        <DateBar date={initialDate} />
 
         {/* Metrics */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 20 }}>
