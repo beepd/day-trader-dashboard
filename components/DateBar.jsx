@@ -1,10 +1,10 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { todayISO, toISO } from '../lib/utils'
 
-export default function DateBar({ date }) {
+export default function DateBar({ date, marketClosed }) {
   const router = useRouter()
   const today = todayISO()
   const refreshTimer = useRef(null)
@@ -42,6 +42,30 @@ export default function DateBar({ date }) {
         max={today}
         onChange={(e) => navigate(e.target.value)}
       />
+      {marketClosed?.closed && marketClosed.message && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'var(--amber-s)',
+            border: '1px solid rgba(255,179,0,0.25)',
+            borderRadius: 2,
+            padding: '4px 10px',
+            fontFamily: 'var(--mono)',
+            fontSize: 9,
+            color: 'var(--amber)',
+            letterSpacing: 1,
+            maxWidth: '100%',
+          }}
+          title="NSE cash equity session (Mon–Fri, excluding holidays)"
+        >
+          <span aria-hidden="true" style={{ opacity: 0.9 }}>
+            ◆
+          </span>
+          <span>{marketClosed.message}</span>
+        </div>
+      )}
       {date === today && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--green-s)', border: '1px solid var(--green-g)', borderRadius: 2, padding: '4px 10px', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--green)', letterSpacing: 2 }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', animation: 'pulse 1.5s infinite' }} />

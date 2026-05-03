@@ -9,12 +9,13 @@ import StrategyPanel from './StrategyPanel'
 import BalanceLedger from './BalanceLedger'
 import Charts from './Charts'
 import ChartLoader from './ChartLoader'
-import { computeMetrics, fmt, fmtPnl, fmtPct } from '../lib/utils'
+import { computeMetrics, fmt, fmtPnl, fmtPct, getMarketClosedInfo } from '../lib/utils'
 
 /** Props come from the server on each navigation (do not copy into useState or date changes stay stale). */
 export default function Dashboard({ initialData, initialDate }) {
-  const { trades, research, analysis, strategy, balHistory, todayBal, prevBal } = initialData
+  const { trades, research, analysis, strategy, balHistory, todayBal, prevBal, holiday } = initialData
   const m = computeMetrics(trades, todayBal, prevBal)
+  const marketClosed = getMarketClosedInfo(initialDate, holiday)
 
   return (
     <>
@@ -37,7 +38,7 @@ export default function Dashboard({ initialData, initialDate }) {
         </div>
 
         {/* Date Bar */}
-        <DateBar date={initialDate} />
+        <DateBar date={initialDate} marketClosed={marketClosed} />
 
         {/* Metrics */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 20 }}>
