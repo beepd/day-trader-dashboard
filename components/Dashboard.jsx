@@ -13,7 +13,7 @@ import { computeMetrics, fmt, fmtPnl, fmtPct, getMarketClosedInfo } from '../lib
 
 /** Props come from the server on each navigation (do not copy into useState or date changes stay stale). */
 export default function Dashboard({ initialData, initialDate }) {
-  const { trades, research, analysis, strategy, balHistory, todayBal, prevBal, holiday } = initialData
+  const { trades, research, analysis, strategy, balChart, balLedger, todayBal, prevBal, holiday } = initialData
   const m = computeMetrics(trades, todayBal, prevBal)
   const marketClosed = getMarketClosedInfo(initialDate, holiday)
 
@@ -89,12 +89,12 @@ export default function Dashboard({ initialData, initialDate }) {
 
         {/* Charts */}
         <div style={{ marginBottom: 12 }}>
-          <Charts balHistory={balHistory} />
+          <Charts balHistory={balChart} />
         </div>
 
         {/* Balance Ledger */}
         <div style={{ marginBottom: 12 }}>
-          <BalanceLedger balHistory={balHistory} />
+          <BalanceLedger balHistory={balLedger} />
         </div>
 
         {/* Footer */}
