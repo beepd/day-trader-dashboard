@@ -28,7 +28,7 @@ export default function Dashboard({ initialData, initialDate }) {
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 8px var(--green)', animation: 'pulse 1.5s infinite' }} />
             <div>
               <div style={{ fontFamily: 'var(--mono)', fontSize: 14, color: 'var(--text)', letterSpacing: 2 }}>THE DAY TRADER</div>
-              <div style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: 3, marginTop: 2 }}>NSE INTRADAY SIMULATION</div>
+              <div style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: 3, marginTop: 2 }}>AGENTIC AI · NSE INTRADAY SIMULATION</div>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--green-s)', border: '1px solid var(--green-g)', borderRadius: 2, padding: '5px 12px', fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--green)', letterSpacing: 2 }}>
@@ -99,7 +99,7 @@ export default function Dashboard({ initialData, initialDate }) {
 
         {/* Footer */}
         <div style={{ textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--faint)', letterSpacing: 3, marginTop: 24 }}>
-          CREWAI · SUPABASE · NSE · APSCHEDULER · SIMULATED TRADING
+          AGENTIC AI · CREWAI · SUPABASE · NSE · APSCHEDULER · SIMULATED TRADING
         </div>
       </div>
     </>

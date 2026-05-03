@@ -1,6 +1,7 @@
 {
   "name": "crewai-dashboard",
   "version": "0.1.0",
+  "description": "Next.js dashboard UI for agentic AI (CrewAI) day-trading simulation backed by Supabase",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -1,6 +1,6 @@
 # Day Trader Dashboard
 
-NSE Intraday Simulation Dashboard built with Next.js 14 + Supabase.
+Next.js 14 UI for an **agentic AI** intraday simulation: a **CrewAI** (Python) app runs the strategy and persists results to **Supabase**; this project is the operator dashboard (trades, research, balance, charts, market calendar).
 
 ## Setup
 
