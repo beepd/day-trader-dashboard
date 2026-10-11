@@ -1,6 +1,7 @@
-# Day Trader Dashboard
+# The Nifty Experiment: dashboard
 
-The public Next.js 14 dashboard for **The Day Trader**, an AI (LangGraph) paper-trading experiment on NSE stocks.
+The public Next.js 14 dashboard for **The Nifty Experiment**, an AI (LangGraph) paper-trading experiment on NSE stocks.
+The site's name lives in one place, `lib/site.js`: the header, the browser tab title and the CSV file name follow it.
 The trading app lives in its own repo and writes everything to **Supabase**. This site only **reads** it, and only
 through read-only `public_*` views.
 

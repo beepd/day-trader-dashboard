@@ -1,14 +1,11 @@
 import './globals.css'
 import ChartLoader from '../components/ChartLoader'
-
-const TITLE = 'The Day Trader: an AI paper-trading experiment'
-const DESCRIPTION =
-  'An AI agent paper-trades Indian (NSE) stocks with fake money every trading day. Every decision and result is published after the market closes. Simulation only, not investment advice.'
+import { SITE_TITLE, SITE_DESCRIPTION } from '../lib/site'
 
 export const metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  openGraph: { title: TITLE, description: DESCRIPTION, type: 'website' },
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: { title: SITE_TITLE, description: SITE_DESCRIPTION, type: 'website' },
   robots: { index: true, follow: true },
 }
 

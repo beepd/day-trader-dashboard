@@ -46,6 +46,9 @@ check('csvCell: quotes and commas', u.csvCell('a,b') === '"a,b"' && u.csvCell('s
 check('csvCell: text starting with = is defused, numbers are not', u.csvCell('=1+1', true) === "'=1+1" && u.csvCell(-5) === '-5' && u.csvCell(null) === '')
 check('prettify', u.prettify('order_win') === 'order win' && u.prettify(null) === '')
 
+const site = await load('../lib/site.js')
+check('site name is set once and the CSV file name follows it', site.SITE_NAME === 'The Nifty Experiment' && site.SITE_TITLE.startsWith(site.SITE_NAME) && site.CSV_FILENAME === 'the_nifty_experiment_trades.csv', site.CSV_FILENAME)
+
 // ------------------------------------------------------------------ calculations
 console.log('\n-- calculations (hand-worked numbers)')
 const rawEquity = [ // deliberately out of order and as text, the way a database can hand them over

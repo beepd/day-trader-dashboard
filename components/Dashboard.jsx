@@ -7,6 +7,7 @@ import TradesTable from './TradesTable'
 import BlogTab from './BlogTab'
 import AboutTab from './AboutTab'
 import { cleanTrades } from '../lib/metrics'
+import { SITE_NAME } from '../lib/site'
 
 /** The page frame: header, warning, tabs, and the chosen tab. Data is fetched on the server (see app/page.jsx). */
 export default function Dashboard({ tab, data, failed, demo, blogUrl }) {
@@ -32,7 +33,7 @@ export default function Dashboard({ tab, data, failed, demo, blogUrl }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 8px var(--green)', animation: 'pulse 1.5s infinite' }} />
           <div>
-            <h1 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 400, color: 'var(--text)', letterSpacing: 2 }}>THE DAY TRADER</h1>
+            <h1 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 400, color: 'var(--text)', letterSpacing: 2 }}>{SITE_NAME.toUpperCase()}</h1>
             <div style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: 3, marginTop: 2 }}>AGENTIC AI · NSE INTRADAY SIMULATION</div>
           </div>
         </div>

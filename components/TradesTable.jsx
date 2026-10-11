@@ -5,6 +5,7 @@ import Panel, { Empty } from './Panel'
 import Badge from './Badge'
 import { fmt, fmtPnl, prettify, csvCell } from '../lib/utils'
 import { OUTCOME_KEYS, OUTCOME_LABELS } from '../lib/metrics'
+import { CSV_FILENAME } from '../lib/site'
 
 const COL = '86px 84px minmax(110px, 1fr) 80px 74px 74px 80px 54px 84px 96px'
 const PAGE = 100
@@ -28,7 +29,7 @@ function downloadCsv(rows) {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = 'ai_day_trader_trades.csv'
+  link.download = CSV_FILENAME
   document.body.appendChild(link)
   link.click()
   link.remove()

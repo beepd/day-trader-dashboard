@@ -1,4 +1,5 @@
 import Panel from './Panel'
+import { SITE_NAME } from '../lib/site'
 
 const heading = { fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--cyan)', letterSpacing: 2, margin: '20px 0 8px' }
 const text = { fontSize: 12, color: 'var(--text)', opacity: 0.85, lineHeight: 1.7 }
@@ -27,8 +28,8 @@ export default function AboutTab() {
       <div style={{ padding: '4px 16px 20px' }}>
         <div style={heading}>WHAT IS THIS?</div>
         <p style={text}>
-          An experiment: an AI agent tries to trade Indian stocks <strong>with fake money</strong>, every trading day, with no human
-          in the loop. Everything it does is recorded and shown here.
+          <strong>{SITE_NAME}</strong> is an experiment: an AI agent tries to trade Indian stocks <strong>with fake money</strong>,
+          every trading day, with no human in the loop. Everything it does is recorded and shown here.
         </p>
 
         <div style={heading}>HOW A DAY WORKS</div>
