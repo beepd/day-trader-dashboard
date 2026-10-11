@@ -19,7 +19,7 @@ export default function Dashboard({ tab, data, failed, demo, blogUrl }) {
         <Empty message="THE DATA COULD NOT BE LOADED RIGHT NOW. PLEASE TRY AGAIN IN A FEW MINUTES" />
       </Panel>
     )
-  } else if (tab === 'overview') body = <OverviewTab equity={data.equity} trades={data.trades} />
+  } else if (tab === 'overview') body = <OverviewTab equity={data.equity} trades={data.trades} funnel={data.funnel} />
   else if (tab === 'days') body = <DayTab data={data} />
   else if (tab === 'trades') body = <TradesTable trades={cleanTrades(data.trades)} />
   else if (tab === 'blog') body = <BlogTab posts={data.posts} blogUrl={blogUrl} />

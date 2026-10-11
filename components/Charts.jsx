@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import Panel, { Empty } from './Panel'
+import CalendarHeatmap from './Calendar'
 import { fmt, fmtPnl } from '../lib/utils'
 
 const TICK = { color: '#4a6080', font: { family: 'IBM Plex Mono', size: 9 } }
@@ -53,6 +54,7 @@ function Caption({ children }) {
 }
 
 const rupees = (v) => '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: 0 })
+const signedRupees = (v) => (v < 0 ? '-' : v > 0 ? '+' : '') + rupees(Math.abs(v))
 
 /** The balance after each day. Green area = ahead of the starting capital (dashed line), red area = behind it. */
 function BalanceChart({ series }) {
@@ -167,8 +169,106 @@ function OutcomeChart({ outcomes }) {
   return <Frame label="How the trades ended" canvasRef={ref} />
 }
 
-export default function Charts({ series, balance, pnl, outcomes }) {
+/** How far below the highest balance ever reached the account is, day by day. 0% = at a new high. */
+function DrawdownChart({ series }) {
+  const ref = useChart(() => ({
+    type: 'line',
+    data: {
+      labels: series.labels,
+      datasets: [{
+        label: 'Below the peak', data: series.drawdown, borderColor: RED, borderWidth: 2, pointRadius: 2, pointBackgroundColor: RED, tension: 0,
+        fill: { target: { value: 0 }, below: 'rgba(255,64,96,0.14)' },
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => (c.parsed.y === 0 ? 'At a new high' : `${c.parsed.y.toFixed(2)}% below the peak`) } } },
+      scales: {
+        x: { ticks: { ...TICK, maxTicksLimit: 6 }, grid: GRID },
+        y: { max: 0, suggestedMin: Math.min(series.worst * 1.15, -1), ticks: { ...TICK, callback: (v) => v.toFixed(1) + '%' }, grid: GRID },
+      },
+    },
+  }), [series])
+  return <Frame height={180} label="How far the balance is below its highest level so far, after each trading day" canvasRef={ref} />
+}
+
+/** Total profit or loss for each kind of news the trades were based on. */
+function NewsTypeChart({ stats }) {
+  const ref = useChart(() => ({
+    type: 'bar',
+    data: {
+      labels: stats.map((s) => s.label),
+      datasets: [{
+        data: stats.map((s) => s.total),
+        backgroundColor: stats.map((s) => (s.total >= 0 ? 'rgba(0,217,126,0.7)' : 'rgba(255,64,96,0.7)')),
+        borderRadius: 2,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (c) => `Total: ${fmtPnl(c.parsed.x)}`,
+            afterLabel: (c) => {
+              const s = stats[c.dataIndex]
+              return [`${s.count} trade${s.count !== 1 ? 's' : ''}, ${Math.round(s.winRate)}% won`, `Average per trade: ${fmtPnl(s.avg)}`]
+            },
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { ...TICK, callback: (v) => signedRupees(v) }, grid: GRID },
+        y: { ticks: { ...TICK, color: '#c8d8f0' }, grid: { display: false } },
+      },
+    },
+  }), [stats])
+  return <Frame height={Math.max(170, stats.length * 34 + 50)} label="Total profit or loss for each kind of news" canvasRef={ref} />
+}
+
+/** From "a stock moved" to "a trade reached its target", all days added up. */
+function FunnelChart({ stages }) {
+  const ref = useChart(() => ({
+    type: 'bar',
+    data: {
+      labels: stages.map((s) => `${s.label} · ${s.n}`),
+      datasets: [{
+        data: stages.map((s) => s.n),
+        backgroundColor: stages.map((_, i) => (i === stages.length - 1 ? 'rgba(0,217,126,0.7)' : 'rgba(41,121,255,0.7)')),
+        borderRadius: 2,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (c) => {
+              const s = stages[c.dataIndex]
+              return s.pct === null ? `${s.n}` : `${s.n} (${Math.round(s.pct)}% of the step before)`
+            },
+          },
+        },
+      },
+      scales: {
+        x: { beginAtZero: true, ticks: { ...TICK, precision: 0 }, grid: GRID },
+        y: { ticks: { ...TICK, color: '#c8d8f0' }, grid: { display: false } },
+      },
+    },
+  }), [stages])
+  return <Frame height={220} label="How many stocks made it through each step, from moving on volume to reaching the target" canvasRef={ref} />
+}
+
+export default function Charts({ series, balance, drawdown, pnl, outcomes, newsTypes, funnel, calendar }) {
   const tradeTotal = outcomes.target_hit + outcomes.stop_hit + outcomes.closed_at_end
+  const newsTrades = newsTypes.reduce((total, s) => total + s.count, 0)
   return (
     <div style={{ display: 'grid', gap: 12 }}>
       <Panel
@@ -193,6 +293,16 @@ export default function Charts({ series, balance, pnl, outcomes }) {
           A day without a benchmark counts as 0%.
         </Caption>
       </Panel>
+      <Panel
+        title="DROP FROM THE PEAK"
+        badge={`WORST ${drawdown.worst.toFixed(2)}%`}
+        badgeStyle={{ background: 'var(--red-s)', color: 'var(--red)', border: '1px solid rgba(255,64,96,0.2)' }}
+      >
+        <DrawdownChart series={drawdown} />
+        <Caption>
+          How far the balance is below the highest it has ever been. 0% means a new high; a deep, long dip means a slow recovery.
+        </Caption>
+      </Panel>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
         <div style={{ minWidth: 0 }}>
           <Panel
@@ -213,6 +323,55 @@ export default function Charts({ series, balance, pnl, outcomes }) {
           </Panel>
         </div>
       </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <Panel
+            title="RESULT BY KIND OF NEWS"
+            badge={`${newsTrades} TRADE${newsTrades !== 1 ? 'S' : ''}`}
+            badgeStyle={{ background: 'var(--violet-s)', color: 'var(--violet)', border: '1px solid rgba(213,0,249,0.2)' }}
+          >
+            {newsTypes.length ? (
+              <>
+                <NewsTypeChart stats={newsTypes} />
+                <Caption>
+                  Total profit or loss of the trades based on each kind of news. Hover a bar for the number of trades and the win rate.
+                  With only a few trades per kind, one lucky trade can move a bar a lot, so read this as a hint, not a verdict.
+                </Caption>
+              </>
+            ) : <Empty message="NO SETTLED TRADES YET" />}
+          </Panel>
+        </div>
+        {funnel && (
+          <div style={{ minWidth: 0 }}>
+            <Panel
+              title="FROM HEADLINE TO TRADE"
+              badge="ALL DAYS ADDED UP"
+              badgeStyle={{ background: 'var(--blue-s)', color: 'var(--blue)', border: '1px solid rgba(41,121,255,0.2)' }}
+            >
+              {funnel[0].n ? (
+                <>
+                  <FunnelChart stages={funnel} />
+                  <Caption>
+                    Each step keeps only some of the stocks before it. It shows how picky the AI is: most movers have no real reason behind
+                    the move, and not every strong one fits the risk rules or the two-position limit.
+                  </Caption>
+                </>
+              ) : <Empty message="NO DAYS RECORDED YET" />}
+            </Panel>
+          </div>
+        )}
+      </div>
+      <Panel
+        title="DAY BY DAY CALENDAR"
+        badge="PROFIT / LOSS"
+        badgeStyle={{ background: 'var(--green-s)', color: 'var(--green)', border: '1px solid var(--green-g)' }}
+      >
+        <CalendarHeatmap calendar={calendar} />
+        <Caption>
+          One square per trading day, one column per week (Monday to Friday). Darker means a bigger result.
+          {calendar.truncated ? ' Only the latest 26 weeks are shown.' : ''}
+        </Caption>
+      </Panel>
     </div>
   )
 }

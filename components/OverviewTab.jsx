@@ -1,10 +1,12 @@
 import MetricCard from './MetricCard'
 import Panel, { Empty } from './Panel'
 import Charts from './Charts'
-import { cleanEquity, cleanTrades, computeMetrics, comparisonSeries, balanceSeries, outcomeCounts } from '../lib/metrics'
+import {
+  cleanEquity, cleanTrades, computeMetrics, comparisonSeries, balanceSeries, drawdownSeries, newsTypeStats, funnelStages, calendarWeeks, outcomeCounts,
+} from '../lib/metrics'
 import { fmt, fmtPnl, fmtPct } from '../lib/utils'
 
-export default function OverviewTab({ equity: rawEquity, trades: rawTrades }) {
+export default function OverviewTab({ equity: rawEquity, trades: rawTrades, funnel }) {
   const equity = cleanEquity(rawEquity)
   if (!equity.length) {
     return (
@@ -17,6 +19,7 @@ export default function OverviewTab({ equity: rawEquity, trades: rawTrades }) {
   const trades = cleanTrades(rawTrades)
   const m = computeMetrics(equity, trades)
   const up = m.balance >= m.start
+  const outcomes = outcomeCounts(trades)
   const winColor = m.winRate === null ? undefined : m.winRate >= 60 ? 'var(--green)' : m.winRate >= 40 ? 'var(--amber)' : 'var(--red)'
 
   return (
@@ -33,8 +36,12 @@ export default function OverviewTab({ equity: rawEquity, trades: rawTrades }) {
       <Charts
         balance={balanceSeries(equity)}
         series={comparisonSeries(equity)}
+        drawdown={drawdownSeries(equity)}
         pnl={equity.map((d) => ({ date: d.market_date, pnl: d.pnl }))}
-        outcomes={outcomeCounts(trades)}
+        outcomes={outcomes}
+        newsTypes={newsTypeStats(trades)}
+        funnel={funnel ? funnelStages(funnel, outcomes) : null}
+        calendar={calendarWeeks(equity)}
       />
     </>
   )

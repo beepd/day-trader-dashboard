@@ -83,6 +83,37 @@ check('outcome counts', JSON.stringify(m.outcomeCounts(trades)) === '{"target_hi
 check('cleanEquity drops rows with no balance and derives a missing P&L',
   m.cleanEquity([{ market_date: 'x', starting_balance: null, ending_balance: 5 }, { market_date: 'y', starting_balance: 10, ending_balance: 12 }]).length === 1 &&
   m.cleanEquity([{ market_date: 'y', starting_balance: 10, ending_balance: 12 }])[0].pnl === 2)
+// --- drawdown, news types, funnel, calendar
+const dd = m.drawdownSeries(equity)
+check('drawdown: 0% at a new high, then 1% below, then recovering (hand-worked)', near(dd.drawdown[0], 0) && near(dd.drawdown[1], -1) && near(dd.drawdown[2], (100500 / 101000 - 1) * 100), dd.drawdown.join())
+check('drawdown: the worst point equals the "worst drop from a peak" card', near(dd.worst, -met.maxDrawdownPct), String(dd.worst))
+check('drawdown: a first day that only loses counts from the starting capital', near(m.drawdownSeries(m.cleanEquity([{ market_date: '2026-10-01', starting_balance: 100000, ending_balance: 99000, pnl: -1000, trades: 1 }])).worst, -1))
+
+const kinds = m.newsTypeStats(m.cleanTrades([
+  { market_date: '2026-10-01', symbol: 'A', catalyst_type: 'earnings', pnl: '10' },
+  { market_date: '2026-10-01', symbol: 'B', catalyst_type: 'earnings', pnl: '-4' },
+  { market_date: '2026-10-02', symbol: 'C', catalyst_type: 'order_win', pnl: '3' },
+  { market_date: '2026-10-02', symbol: 'D', catalyst_type: null, pnl: '-1' },
+  { market_date: '2026-10-02', symbol: 'E', catalyst_type: 'earnings', pnl: null },
+]))
+check('news types: best total first, a missing type becomes "unknown", unsettled trades are left out', kinds.map((k) => k.type).join() === 'earnings,order_win,unknown', kinds.map((k) => k.type).join())
+check('news types: totals, counts, win rate and average (earnings = +10 and -4)', kinds[0].total === 6 && kinds[0].count === 2 && kinds[0].winRate === 50 && kinds[0].avg === 3 && kinds[0].label === 'earnings' && kinds[1].label === 'order win')
+check('news types: no trades gives an empty list', m.newsTypeStats([]).length === 0 && m.newsTypeStats(null).length === 0)
+
+const stages = m.funnelStages({ screened: 10, withReason: 6, strong: 3, traded: 2 }, { target_hit: 1, stop_hit: 1, closed_at_end: 0 })
+check('funnel: five steps in order', stages.map((x) => x.n).join() === '10,6,3,2,1', stages.map((x) => x.n).join())
+check('funnel: each step shows its share of the step before (60%, 50%, 66.7%, 50%)', stages[0].pct === null && near(stages[1].pct, 60) && near(stages[2].pct, 50) && near(stages[3].pct, 200 / 3) && near(stages[4].pct, 50))
+check('funnel: nothing recorded gives no steps, and an empty first step gives no percentages', m.funnelStages(null, {}).length === 0 && m.funnelStages({ screened: 0, withReason: 0, strong: 0, traded: 0 }, { target_hit: 0 }).every((x) => x.pct === null))
+
+const cal = m.calendarWeeks(equity)
+const calCells = cal.weeks.flatMap((w) => w.days)
+check('calendar: two Monday-to-Friday weeks (28 Sep and 5 Oct 2026), five days each', cal.weeks.length === 2 && cal.weeks.every((w) => w.days.length === 5) && cal.weeks[0].days[0].date === '2026-09-28' && cal.weeks[1].days[0].date === '2026-10-05', cal.weeks.map((w) => w.days[0].date).join())
+check('calendar: days line up with their results (1 Oct +1000, 2 Oct -1010, 5 Oct +510)', calCells.find((d) => d.date === '2026-10-01').pnl === 1000 && calCells.find((d) => d.date === '2026-10-02').pnl === -1010 && calCells.find((d) => d.date === '2026-10-05').pnl === 510)
+check('calendar: a day with no record has no result, days after the latest are marked future', calCells.find((d) => d.date === '2026-09-29').hasRow === false && calCells.find((d) => d.date === '2026-10-06').future === true && calCells.find((d) => d.date === '2026-10-05').future === false)
+check('calendar: month labels appear when the month changes; biggest result sets the colour scale', cal.weeks[0].month === 'Sep' && cal.weeks[1].month === 'Oct' && cal.maxAbs === 1010, cal.weeks.map((w) => w.month).join())
+const calShort = m.calendarWeeks(equity, 1)
+check('calendar: limiting to the latest week says it was cut', calShort.weeks.length === 1 && calShort.truncated === true && cal.truncated === false)
+
 check('verdict labels', m.verdictLabel(null).text === 'NO VERDICT' && m.verdictLabel({ on_watchlist: true }).tone === 'green' &&
   m.verdictLabel({ has_catalyst: true, strength: 'weak' }).text === 'CATALYST WEAK · NOT SELECTED' && m.verdictLabel({ has_catalyst: false }).tone === 'red')
 const stats = m.dayStats({ run: { universe_size: null, passed_screen: null }, equityRow: null, candidates: [1, 2, 3], verdicts: [{ on_watchlist: true }, { on_watchlist: false }], plans: [{ status: 'accepted' }, { status: 'skipped' }] })
@@ -103,6 +134,14 @@ check('every finished day has detail, and every accepted plan has its trade', de
 }))
 check('stocks are unique within a day', Object.values(demo.details).every((d) => new Set(d.candidates.map((c) => c.symbol)).size === d.candidates.length))
 check('demo links are safe web links', Object.values(demo.details).every((d) => d.headlines.every((h) => u.safeUrl(h.url) !== null)))
+
+const demoCal = m.calendarWeeks(m.cleanEquity(demo.equity), 100)
+const shownPnl = demoCal.weeks.flatMap((w) => w.days).reduce((sum, d) => sum + (d.pnl ?? 0), 0)
+check('demo calendar: every day\'s result is on the calendar exactly once', near(shownPnl, demo.equity.reduce((sum, d) => sum + d.pnl, 0), 0.01) && !demoCal.truncated)
+const demoKinds = m.newsTypeStats(demo.trades)
+check('demo news types: counts add up to all settled trades, totals to the overall P&L', demoKinds.reduce((n, k) => n + k.count, 0) === demo.trades.length && near(demoKinds.reduce((t, k) => t + k.total, 0), demo.trades.reduce((t, x) => t + x.pnl, 0), 0.01))
+const demoDrawdown = m.drawdownSeries(m.cleanEquity(demo.equity))
+check('demo drawdown never goes above 0% and matches the card', demoDrawdown.drawdown.every((v) => v <= 0) && near(demoDrawdown.worst, -m.computeMetrics(m.cleanEquity(demo.equity), demo.trades).maxDrawdownPct))
 
 // ------------------------------------------------------------------ keys
 console.log('\n-- keys: only a publishable key is accepted')
@@ -131,6 +170,8 @@ process.env.DASHBOARD_CACHE_SECONDS = '0'
 const overview = await q.getOverviewData()
 check('overview: balance days oldest first', overview.equity.map((d) => d.market_date).join() === '2026-10-07,2026-10-09')
 check('overview: trades newest first', overview.trades[0].market_date === '2026-10-09' && overview.trades.length === 2)
+check('overview: funnel totals counted by the server (5 stocks, 3 with a reason, 2 strong, 2 traded)', JSON.stringify(overview.funnel) === '{"screened":5,"withReason":3,"strong":2,"traded":2}', JSON.stringify(overview.funnel))
+check('overview: the funnel asks for counts, not for every row', fake.log.filter((r) => /public_(candidates|verdicts|plans)$/.test(r.path) && r.search.includes('limit=1') && !r.search.includes('market_date=eq')).length >= 4)
 check('trades tab: same trades', (await q.getTradesData()).trades.length === 2)
 
 let day = await q.getDaysData(null)
@@ -159,6 +200,16 @@ fake.state.failing.add('public_blog_posts')
 check('blog: an error there just means no posts', (await q.getBlogPosts()).length === 0)
 fake.state.failing.delete('public_blog_posts')
 
+fake.state.failing.add('public_plans')
+const loudErrors = []
+const realConsoleError = console.error
+console.error = (...args) => loudErrors.push(args.join(' '))
+const noFunnel = await q.getOverviewData()
+console.error = realConsoleError
+check('funnel: if its counts fail, the rest of the Overview still loads and the funnel is simply missing', noFunnel.funnel === null && noFunnel.equity.length === 2 && noFunnel.trades.length === 2)
+check('funnel: the failure is logged with only its code and view, never the server text', loudErrors.length === 1 && loudErrors[0].includes('XX000') && loudErrors[0].includes('public_plans') && !loudErrors[0].includes('SECRET'), loudErrors.join('|'))
+fake.state.failing.delete('public_plans')
+
 fake.state.failing.add('public_trades')
 error = await rejection(q.getOverviewData())
 check('errors: a failed read throws', error !== null)
@@ -181,6 +232,7 @@ const demoDay = await q.getDaysData(null)
 const lastDemoRun = demo.runs[demo.runs.length - 1]
 check('demo mode never calls Supabase', fake.log.length === askedBefore)
 check('demo overview and newest day work', demoOverview.equity.length === demo.equity.length && demoDay.date === lastDemoRun.market_date)
+check('demo overview has funnel totals that only ever shrink', demoOverview.funnel.screened >= demoOverview.funnel.withReason && demoOverview.funnel.withReason >= demoOverview.funnel.strong && demoOverview.funnel.strong >= demoOverview.funnel.traded && demoOverview.funnel.traded === demo.trades.length, JSON.stringify(demoOverview.funnel))
 check('demo day has neighbours', demoDay.prevDate !== null && demoDay.nextDate === null)
 delete process.env.DASHBOARD_DEMO
 

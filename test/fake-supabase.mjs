@@ -28,9 +28,12 @@ export const FIXTURE = {
     { market_date: '2026-10-09', run_id: 3, symbol: 'ITC', position: 1, title: 'First headline', source: 'Example', published_at: null, url: 'https://example.com/1' },
   ],
   public_verdicts: [
+    { market_date: '2026-10-07', run_id: 1, symbol: 'ABB', has_catalyst: true, bullish: true, strength: 'strong', catalyst_type: 'earnings', reason: 'Beat', cited_positions: [1], overruled_by_code: false, on_watchlist: true },
+    { market_date: '2026-10-07', run_id: 1, symbol: 'TCS', has_catalyst: true, bullish: true, strength: 'weak', catalyst_type: 'broker_target', reason: 'Vague', cited_positions: [], overruled_by_code: false, on_watchlist: false },
     { market_date: '2026-10-09', run_id: 3, symbol: 'ITC', has_catalyst: true, bullish: true, strength: 'strong', catalyst_type: 'order_win', reason: 'Big order', cited_positions: [1], overruled_by_code: false, on_watchlist: true },
   ],
   public_plans: [
+    { market_date: '2026-10-07', run_id: 1, symbol: 'ABB', status: 'accepted', rejection_reason: null, entry: 5000, stop: 4950, target: 5075, shares: 5, cost: 25000, outcome: 'target_hit', exit_price: 5100, pnl: 500 },
     { market_date: '2026-10-09', run_id: 3, symbol: 'ITC', status: 'accepted', rejection_reason: null, entry: 400, stop: 396, target: 406, shares: 50, cost: 20000, outcome: 'stop_hit', exit_price: 394, pnl: -300 },
   ],
   public_blog_posts: [],
@@ -71,7 +74,11 @@ export async function startFakeSupabase(tables = FIXTURE) {
       const [column, direction] = order.split('.')
       rows.sort((a, b) => (a[column] < b[column] ? -1 : a[column] > b[column] ? 1 : 0) * (direction === 'desc' ? -1 : 1))
     }
-    res.end(JSON.stringify(rows.slice(0, Number(url.searchParams.get('limit') || 1000))))
+    const total = rows.length
+    rows = rows.slice(0, Number(url.searchParams.get('limit') || 1000))
+    // Like PostgREST: when a total is asked for, say so in the Content-Range header ("first-last/total")
+    if (String(req.headers.prefer || '').includes('count=exact')) res.setHeader('content-range', `${rows.length ? `0-${rows.length - 1}` : '*'}/${total}`)
+    res.end(JSON.stringify(rows))
   })
 
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
