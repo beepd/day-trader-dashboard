@@ -23,7 +23,7 @@ export default function Dashboard({ tab, data, failed, demo, blogUrl }) {
   else if (tab === 'days') body = <DayTab data={data} />
   else if (tab === 'trades') body = <TradesTable trades={cleanTrades(data.trades)} />
   else if (tab === 'blog') body = <BlogTab posts={data.posts} blogUrl={blogUrl} />
-  else body = <AboutTab />
+  else body = <AboutTab blogUrl={blogUrl} />
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px 48px' }}>
@@ -51,12 +51,17 @@ export default function Dashboard({ tab, data, failed, demo, blogUrl }) {
       </div>
 
       <Disclaimer demo={demo} />
-      <Tabs active={tab} />
+      <Tabs active={tab} blogUrl={blogUrl} />
       {body}
 
       {/* Footer */}
       <div style={{ textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--faint)', letterSpacing: 3, marginTop: 24 }}>
         AGENTIC AI · LANGGRAPH · SUPABASE · NSE · SIMULATED TRADING
+        {blogUrl && (
+          <div style={{ marginTop: 10 }}>
+            <a href={blogUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--muted)' }}>READ THE BLOG ↗</a>
+          </div>
+        )}
       </div>
     </div>
   )

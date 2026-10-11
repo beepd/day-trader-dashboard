@@ -2,6 +2,7 @@ import Dashboard from '../components/Dashboard'
 import { getOverviewData, getDaysData, getTradesData, getBlogPosts } from '../lib/queries'
 import { isDemo } from '../lib/supabase'
 import { isValidISODate, safeUrl } from '../lib/utils'
+import { BLOG_URL } from '../lib/site'
 
 // Reading searchParams makes this page render on every request. How fresh the data is comes from the short
 // cache in lib/supabase.js (5 minutes by default; DASHBOARD_CACHE_SECONDS=0 turns it off).
@@ -25,5 +26,5 @@ export default async function Home({ searchParams }) {
     failed = true
   }
 
-  return <Dashboard tab={tab} data={data} failed={failed} demo={isDemo()} blogUrl={safeUrl(process.env.BLOG_URL || '')} />
+  return <Dashboard tab={tab} data={data} failed={failed} demo={isDemo()} blogUrl={safeUrl(process.env.BLOG_URL || '') || BLOG_URL} />
 }

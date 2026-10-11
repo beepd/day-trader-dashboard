@@ -47,6 +47,7 @@ check('csvCell: text starting with = is defused, numbers are not', u.csvCell('=1
 check('prettify', u.prettify('order_win') === 'order win' && u.prettify(null) === '')
 
 const site = await load('../lib/site.js')
+check('site addresses: main site, and the blog on its own subdomain', site.SITE_URL === 'https://niftyexperiment.com' && site.BLOG_URL === 'https://blog.niftyexperiment.com' && u.safeUrl(site.BLOG_URL) === site.BLOG_URL)
 check('site name is set once and the CSV file name follows it', site.SITE_NAME === 'The Nifty Experiment' && site.SITE_TITLE.startsWith(site.SITE_NAME) && site.CSV_FILENAME === 'the_nifty_experiment_trades.csv', site.CSV_FILENAME)
 
 // ------------------------------------------------------------------ calculations

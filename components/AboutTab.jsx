@@ -22,7 +22,7 @@ const LIMITS = [
   ['Not advice.', 'Nothing here is investment advice. Please do not trade based on this page.'],
 ]
 
-export default function AboutTab() {
+export default function AboutTab({ blogUrl }) {
   return (
     <Panel title="ABOUT">
       <div style={{ padding: '4px 16px 20px' }}>
@@ -30,6 +30,12 @@ export default function AboutTab() {
         <p style={text}>
           <strong>{SITE_NAME}</strong> is an experiment: an AI agent tries to trade Indian stocks <strong>with fake money</strong>,
           every trading day, with no human in the loop. Everything it does is recorded and shown here.
+          {blogUrl && (
+            <>
+              {' '}A short write-up of each day is on the{' '}
+              <a href={blogUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)' }}>blog</a>.
+            </>
+          )}
         </p>
 
         <div style={heading}>HOW A DAY WORKS</div>
