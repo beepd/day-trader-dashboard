@@ -65,6 +65,13 @@ button {
 }
 button:hover { border-color: var(--border-b); color: var(--text); }
 
+/* Expandable rows on the Day by day tab: no browser arrow, our own ▶ turns when the row opens */
+summary { list-style: none; cursor: pointer; }
+summary::-webkit-details-marker { display: none; }
+summary:focus-visible, a:focus-visible, button:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; }
+details[open] > summary .chev { transform: rotate(90deg); }
+button:disabled { cursor: default; }
+
 .pos { color: var(--green); }
 .neg { color: var(--red); }
 .neu { color: var(--muted); }

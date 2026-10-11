@@ -1,64 +1,75 @@
 # Day Trader Dashboard
 
-Next.js 14 UI for an **agentic AI** intraday simulation: a **CrewAI** (Python) app runs the strategy and persists results to **Supabase**; this project is the operator dashboard (trades, research, balance, charts, market calendar).
+The public Next.js 14 dashboard for **The Day Trader**, an AI (LangGraph) paper-trading experiment on NSE stocks.
+The trading app lives in its own repo and writes everything to **Supabase**. This site only **reads** it, and only
+through read-only `public_*` views.
+
+> A simulation with fake money. Not investment advice. Results are gross (before brokerage, taxes and slippage).
+
+## What it shows
+
+Five sections, chosen with `?tab=` in the address so every view is a shareable link:
+
+| Section | Address | Reads |
+|---|---|---|
+| Overview: balance, return, win rate, worst drop, strategy vs the Nifty, profit/loss per day, how trades ended | `/` | `public_daily_equity`, `public_trades` |
+| Day by day: what the app looked at, the verdict and headlines for each stock, the plan and its result | `/?tab=days&date=2026-10-09` | `public_runs`, `public_daily_equity`, `public_candidates`, `public_headlines`, `public_verdicts`, `public_plans` |
+| All trades: filter by outcome, download CSV | `/?tab=trades` | `public_trades` |
+| Blog: link to the blog, plus any posts marked published | `/?tab=blog` | `public_blog_posts` |
+| About | `/?tab=about` | nothing |
+
+A day appears only after 3:35 PM India time (the views enforce this, not this site). Without a date, *Day by day*
+opens the newest published day.
 
 ## Setup
 
-### 1. Install dependencies
 ```bash
 npm install
+cp .env.local.example .env.local   # then fill it in (Windows: copy .env.local.example .env.local)
+npm run dev                         # http://localhost:3000
 ```
 
-### 2. Configure environment
+Settings (in `.env.local`, and in Vercel under Settings → Environment Variables):
+
+| Name | Needed | What |
+|---|---|---|
+| `SUPABASE_URL` | yes | the project address |
+| `SUPABASE_PUBLISHABLE_KEY` | yes | the **publishable** key |
+| `BLOG_URL` | no | blog address, shown as a button on the Blog tab |
+| `DASHBOARD_CACHE_SECONDS` | no | how long an answer from Supabase may be reused. Default `300`. `0` = no cache. When an answer expires, one visitor may still see the old one while a fresh one is fetched in the background |
+| `DASHBOARD_DEMO` | no | `1` shows made-up sample data, to preview the layout without Supabase |
+
+The older names `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` still work. Prefer the new names:
+nothing here needs to reach the browser, because the pages are fetched on the server.
+
+## Security model
+
+- The site reads **only** the `public_*` views, with the **publishable** key. The base tables stay locked (row-level
+  security on, no policies). **Do not add "public read" policies to base tables.** The old setup that did that is gone.
+- The dashboard **refuses to start with a secret / service-role key** (`sb_secret_...` or a JWT with role `service_role`).
+- Error text is never shown to visitors. A failed load shows a friendly message, and only the error code is logged on the server.
+- Text from the model and the news is shown as plain text (React escapes it). Headline links are only made for
+  `http(s)` addresses, and open with `rel="noopener noreferrer nofollow"`.
+- CSV cells that start with `=`, `+`, `-` or `@` are protected, so a spreadsheet never runs them as a formula.
+- No secrets and no server addresses belong in this repo. `.env.local` is git-ignored.
+
+The views come from the trading app's SQL migrations (`migration_002`, `003`, `007` and later). Run those on the
+Supabase project this site points at.
+
+## Tests
+
 ```bash
-cp .env.local.example .env.local
-```
-Edit `.env.local` and add your Supabase credentials:
-```
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+npm test
 ```
 
-### 3. Enable public read access in Supabase
-Run this in your Supabase SQL editor:
-```sql
-alter table trades enable row level security;
-alter table research_shortlist enable row level security;
-alter table analysis_stocks enable row level security;
-alter table strategy_plans enable row level security;
-alter table daily_balance enable row level security;
-
-create policy "Public read" on trades for select to anon using (true);
-create policy "Public read" on research_shortlist for select to anon using (true);
-create policy "Public read" on analysis_stocks for select to anon using (true);
-create policy "Public read" on strategy_plans for select to anon using (true);
-create policy "Public read" on daily_balance for select to anon using (true);
-```
-
-### 4. Run locally
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000)
+Runs offline in plain Node (20.19+ or 22.12+). It checks the calculations, the helpers, the demo data, and the queries against a
+small stand-in Supabase server, including that only `public_*` views are ever requested and that errors do not leak.
 
 ## Deploy to Vercel
 
-```bash
-# Push to GitHub first, then:
-npx vercel
-```
+Connect this GitHub repo in the Vercel dashboard (it deploys on every push), add the settings above, and deploy.
+Changing the Supabase project means changing `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, then redeploying.
 
-Or connect your GitHub repo in the Vercel dashboard and it will auto-deploy on every push.
+## Look and feel
 
-Add your environment variables in Vercel: Settings → Environment Variables.
-
-## Features
-- Date picker with prev/next navigation (URL param: `/?date=2026-05-01`)
-- Auto-refresh every 15 minutes when viewing today
-- 6 metric cards: starting capital, deployed, closing balance, P&L, trade count, win rate
-- Executed trades table with exit reason badges
-- Research shortlist with sectors and trending reasons
-- Analysis scores with intraday score bars
-- Strategy plans with entry/target/stop-loss
-- Equity curve (line chart) and daily P&L (bar chart) from balance history
-- Balance ledger with debit/credit entries
+Dark theme with the colours in `app/globals.css`. Charts use Chart.js, loaded once from a script tag in `app/layout.jsx`.

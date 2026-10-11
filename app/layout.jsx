@@ -1,15 +1,25 @@
 import './globals.css'
+import ChartLoader from '../components/ChartLoader'
+
+const TITLE = 'The Day Trader: an AI paper-trading experiment'
+const DESCRIPTION =
+  'An AI agent paper-trades Indian (NSE) stocks with fake money every trading day. Every decision and result is published after the market closes. Simulation only, not investment advice.'
 
 export const metadata = {
-  title: 'The Day Trader',
-  description:
-    'UI for an agentic AI day-trading simulation: CrewAI pipeline writes NSE intraday runs to Supabase; this dashboard reads and visualizes them.',
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: { title: TITLE, description: DESCRIPTION, type: 'website' },
+  robots: { index: true, follow: true },
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {/* Chart.js, loaded once for the whole site (beforeInteractive scripts belong in the root layout) */}
+        <ChartLoader />
+        {children}
+      </body>
     </html>
   )
 }

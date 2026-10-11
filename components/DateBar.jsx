@@ -1,36 +1,26 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef } from 'react'
-import { todayISO, toLocalDateISO } from '../lib/utils'
+import { useEffect } from 'react'
+import { todayISO } from '../lib/utils'
 
-export default function DateBar({ date, marketClosed }) {
+/**
+ * Pick a day. PREV and NEXT jump to the neighbouring day that has a record (weekends and holidays are skipped);
+ * the date box can still open any date. LATEST opens the newest published day.
+ */
+export default function DateBar({ date, marketClosed, prevDate, nextDate }) {
   const router = useRouter()
   const today = todayISO()
-  const refreshTimer = useRef(null)
 
   function navigate(d) {
-    router.push(`/?date=${d}`)
+    router.push(`/?tab=days&date=${d}`)
   }
 
-  function prev() {
-    const d = new Date(date + 'T00:00:00')
-    d.setDate(d.getDate() - 1)
-    navigate(toLocalDateISO(d))
-  }
-
-  function next() {
-    const d = new Date(date + 'T00:00:00')
-    d.setDate(d.getDate() + 1)
-    const n = toLocalDateISO(d)
-    if (n <= today) navigate(n)
-  }
-
-  // Auto-refresh every 15 minutes when viewing today
+  // Today's results appear after 3:35 PM India time, so keep checking (every 15 minutes) while today is open
   useEffect(() => {
     if (date !== today) return
-    refreshTimer.current = setInterval(() => router.refresh(), 15 * 60 * 1000)
-    return () => clearInterval(refreshTimer.current)
+    const timer = setInterval(() => router.refresh(), 15 * 60 * 1000)
+    return () => clearInterval(timer)
   }, [date, today, router])
 
   return (
@@ -40,7 +30,8 @@ export default function DateBar({ date, marketClosed }) {
         type="date"
         value={date}
         max={today}
-        onChange={(e) => navigate(e.target.value)}
+        aria-label="Trade date"
+        onChange={(e) => e.target.value && navigate(e.target.value)}
       />
       {marketClosed?.closed && marketClosed.message && (
         <div
@@ -73,9 +64,9 @@ export default function DateBar({ date, marketClosed }) {
         </div>
       )}
       <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
-        <button onClick={prev}>← PREV</button>
-        <button onClick={() => navigate(today)} style={{ background: 'var(--cyan-s)', borderColor: 'rgba(0,229,255,0.3)', color: 'var(--cyan)' }}>TODAY</button>
-        <button onClick={next} disabled={date >= today} style={{ opacity: date >= today ? 0.4 : 1 }}>NEXT →</button>
+        <button onClick={() => prevDate && navigate(prevDate)} disabled={!prevDate} style={{ opacity: prevDate ? 1 : 0.4 }}>← PREV</button>
+        <button onClick={() => router.push('/?tab=days')} style={{ background: 'var(--cyan-s)', borderColor: 'rgba(0,229,255,0.3)', color: 'var(--cyan)' }}>LATEST</button>
+        <button onClick={() => nextDate && navigate(nextDate)} disabled={!nextDate} style={{ opacity: nextDate ? 1 : 0.4 }}>NEXT →</button>
       </div>
     </div>
   )
