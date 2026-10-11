@@ -74,6 +74,8 @@ check('a first day that only loses still counts as a 1% drop, and no trades mean
 const series = m.comparisonSeries(equity)
 check('strategy line = % above the start', near(series.strategy[0], 1) && near(series.strategy[1], -0.01) && near(series.strategy[2], 0.5))
 check('Nifty line compounds day by day (+0.5%, -1% => -0.505%), missing day = 0%', near(series.nifty[0], 0.5) && near(series.nifty[1], -0.505) && near(series.nifty[2], -0.505), series.nifty.join())
+const bal = m.balanceSeries(equity)
+check('balance series: ending balance per day, oldest first, with the starting capital', bal.balance.join() === '101000,99990,100500' && bal.start === 100000 && bal.labels[0] === '2026-10-01' && bal.pnl.join() === '1000,-1010,510', JSON.stringify(bal))
 check('outcome counts', JSON.stringify(m.outcomeCounts(trades)) === '{"target_hit":2,"stop_hit":1,"closed_at_end":2}')
 check('cleanEquity drops rows with no balance and derives a missing P&L',
   m.cleanEquity([{ market_date: 'x', starting_balance: null, ending_balance: 5 }, { market_date: 'y', starting_balance: 10, ending_balance: 12 }]).length === 1 &&

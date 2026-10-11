@@ -12,7 +12,7 @@ Five sections, chosen with `?tab=` in the address so every view is a shareable l
 
 | Section | Address | Reads |
 |---|---|---|
-| Overview: balance, return, win rate, worst drop, strategy vs the Nifty, profit/loss per day, how trades ended | `/` | `public_daily_equity`, `public_trades` |
+| Overview: balance, return, win rate, worst drop, balance over time, strategy vs the Nifty, profit/loss per day, how trades ended | `/` | `public_daily_equity`, `public_trades` |
 | Day by day: what the app looked at, the verdict and headlines for each stock, the plan and its result | `/?tab=days&date=2026-10-09` | `public_runs`, `public_daily_equity`, `public_candidates`, `public_headlines`, `public_verdicts`, `public_plans` |
 | All trades: filter by outcome, download CSV | `/?tab=trades` | `public_trades` |
 | Blog: link to the blog, plus any posts marked published | `/?tab=blog` | `public_blog_posts` |

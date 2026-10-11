@@ -1,7 +1,7 @@
 import MetricCard from './MetricCard'
 import Panel, { Empty } from './Panel'
 import Charts from './Charts'
-import { cleanEquity, cleanTrades, computeMetrics, comparisonSeries, outcomeCounts } from '../lib/metrics'
+import { cleanEquity, cleanTrades, computeMetrics, comparisonSeries, balanceSeries, outcomeCounts } from '../lib/metrics'
 import { fmt, fmtPnl, fmtPct } from '../lib/utils'
 
 export default function OverviewTab({ equity: rawEquity, trades: rawTrades }) {
@@ -31,6 +31,7 @@ export default function OverviewTab({ equity: rawEquity, trades: rawTrades }) {
       </div>
 
       <Charts
+        balance={balanceSeries(equity)}
         series={comparisonSeries(equity)}
         pnl={equity.map((d) => ({ date: d.market_date, pnl: d.pnl }))}
         outcomes={outcomeCounts(trades)}

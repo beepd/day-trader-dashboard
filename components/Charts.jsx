@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import Panel, { Empty } from './Panel'
-import { fmtPnl } from '../lib/utils'
+import { fmt, fmtPnl } from '../lib/utils'
 
 const TICK = { color: '#4a6080', font: { family: 'IBM Plex Mono', size: 9 } }
 const GRID = { color: '#0f2040' }
@@ -50,6 +50,46 @@ function Frame({ height = 200, label, canvasRef }) {
 
 function Caption({ children }) {
   return <div style={{ padding: '0 16px 14px', fontSize: 10, color: 'var(--muted)', lineHeight: 1.5 }}>{children}</div>
+}
+
+const rupees = (v) => '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: 0 })
+
+/** The balance after each day. Green area = ahead of the starting capital (dashed line), red area = behind it. */
+function BalanceChart({ series }) {
+  const ref = useChart(() => ({
+    type: 'line',
+    data: {
+      labels: series.labels,
+      datasets: [
+        {
+          label: 'Ending balance', data: series.balance, borderColor: GREEN, borderWidth: 2, pointRadius: 2, pointBackgroundColor: GREEN, tension: 0.3,
+          fill: { target: { value: series.start }, above: 'rgba(0,217,126,0.08)', below: 'rgba(255,64,96,0.12)' },
+        },
+        {
+          label: 'Starting capital', data: series.labels.map(() => series.start), borderColor: '#4a6080', borderWidth: 1, borderDash: [5, 4], pointRadius: 0, fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, labels: { color: '#c8d8f0', boxWidth: 12, font: { family: 'IBM Plex Mono', size: 10 } } },
+        tooltip: {
+          callbacks: {
+            label: (c) => `${c.dataset.label}: ${fmt(c.parsed.y)}`,
+            footer: (items) => `Day profit/loss: ${fmtPnl(series.pnl[items[0].dataIndex])}`,
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { ...TICK, maxTicksLimit: 6 }, grid: GRID },
+        y: { ticks: { ...TICK, callback: (v) => rupees(v) }, grid: GRID },
+      },
+    },
+  }), [series])
+  return <Frame height={240} label="Account balance after each trading day, compared with the starting capital" canvasRef={ref} />
 }
 
 function VersusChart({ series }) {
@@ -127,10 +167,21 @@ function OutcomeChart({ outcomes }) {
   return <Frame label="How the trades ended" canvasRef={ref} />
 }
 
-export default function Charts({ series, pnl, outcomes }) {
+export default function Charts({ series, balance, pnl, outcomes }) {
   const tradeTotal = outcomes.target_hit + outcomes.stop_hit + outcomes.closed_at_end
   return (
     <div style={{ display: 'grid', gap: 12 }}>
+      <Panel
+        title="BALANCE OVER TIME"
+        badge="ENDING BALANCE ₹"
+        badgeStyle={{ background: 'var(--cyan-s)', color: 'var(--cyan)', border: '1px solid rgba(0,229,255,0.2)' }}
+      >
+        <BalanceChart series={balance} />
+        <Caption>
+          The balance at the end of each trading day. The dashed line is the starting capital: green shading means ahead of
+          the start, red means behind it. Gross of brokerage, taxes and slippage.
+        </Caption>
+      </Panel>
       <Panel
         title="STRATEGY VS THE MARKET"
         badge="CUMULATIVE RETURN %"
