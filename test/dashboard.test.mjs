@@ -35,7 +35,6 @@ check('fmtPnl and fmtPct carry a sign', u.fmtPnl(-5) === '-₹5.00' && u.fmtPnl(
 check('todayISO looks like a date', /^\d{4}-\d{2}-\d{2}$/.test(u.todayISO()), u.todayISO())
 check('isValidISODate accepts a real date', u.isValidISODate('2026-10-09'))
 check('isValidISODate rejects junk', ['2026-02-30', '2026-1-9', '20261009', '', null, undefined, ['2026-10-09'], '2026-10-09; drop table'].every((v) => !u.isValidISODate(v)))
-check('after-close clock: 10:50 AM IST is before 3:35 PM, 3:34 PM is before, 3:35 PM and 4 PM are after (IST = UTC+5:30)', !u.isAfterMarketClose(new Date('2026-10-12T05:20:00Z')) && !u.isAfterMarketClose(new Date('2026-10-12T10:04:00Z')) && u.isAfterMarketClose(new Date('2026-10-12T10:05:00Z')) && u.isAfterMarketClose(new Date('2026-10-12T10:30:00Z')))
 check('weekend detection (Fri open, Sat and Sun closed)', !u.isWeekendIST('2026-10-09') && u.isWeekendIST('2026-10-10') && u.isWeekendIST('2026-10-11'))
 check('closed info: skipped day shows its note', u.getMarketClosedInfo('2026-10-08', { status: 'skipped', note: 'market holiday' }).message.includes('market holiday'))
 check('closed info: failed day', u.getMarketClosedInfo('2026-10-08', { status: 'failed' }).closed === true)

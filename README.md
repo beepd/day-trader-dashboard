@@ -22,8 +22,9 @@ Five sections, chosen with `?tab=` in the address so every view is a shareable l
 | Blog: the **BLOG** tab opens the blog site directly. The old `/?tab=blog` address still shows a short page with the link, plus any posts marked published | `/?tab=blog` | `public_blog_posts` |
 | About | `/?tab=about` | nothing |
 
-A day appears only after 3:35 PM India time (the views enforce this, not this site). Without a date, *Day by day*
-opens the newest published day.
+A day's picks (what the app looked at, the verdicts and the plans) appear once the morning run has finished, about 9:40 AM India
+time. Its results (profit or loss, the balance, the trades) appear only after 3:35 PM. The views enforce this, not this site (it needs
+`migration_010` from the trading repo). Without a date, *Day by day* opens the newest published day.
 
 ## Setup
 

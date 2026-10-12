@@ -14,7 +14,7 @@ export default function Disclaimer({ demo }) {
         <div style={{ fontSize: 11, color: 'var(--text)', opacity: 0.8, lineHeight: 1.6 }}>
           This is a simulation with fake money, run by an AI. Nothing here is a recommendation to buy or sell anything.
           Results are gross: they ignore brokerage, taxes and slippage, so real trading would have done worse.
-          Each trading day is published only after the market has closed.
+          A day's picks appear after the morning run; its results are published only after the market has closed.
         </div>
       </div>
     </>

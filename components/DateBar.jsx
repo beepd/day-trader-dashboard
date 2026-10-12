@@ -16,7 +16,7 @@ export default function DateBar({ date, marketClosed, prevDate, nextDate }) {
     router.push(`/?tab=days&date=${d}`)
   }
 
-  // Today's results appear after 3:35 PM India time, so keep checking (every 15 minutes) while today is open
+  // Today's picks appear after the morning run and its results after 3:35 PM India time, so keep checking (every 15 minutes) while today is open
   useEffect(() => {
     if (date !== today) return
     const timer = setInterval(() => router.refresh(), 15 * 60 * 1000)

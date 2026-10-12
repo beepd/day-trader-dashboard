@@ -3,7 +3,7 @@ import MetricCard from './MetricCard'
 import Panel, { Empty } from './Panel'
 import CandidateList from './CandidateList'
 import { dayStats } from '../lib/metrics'
-import { fmtPnl, getMarketClosedInfo, longDate, todayISO, isWeekendIST, isAfterMarketClose } from '../lib/utils'
+import { fmtPnl, getMarketClosedInfo, longDate, todayISO, isWeekendIST } from '../lib/utils'
 
 export default function DayTab({ data }) {
   const { date, run, equityRow, prevDate, nextDate, candidates, headlines, verdicts, plans } = data
@@ -11,20 +11,26 @@ export default function DayTab({ data }) {
   if (!date) {
     return (
       <Panel title="DAY BY DAY">
-        <Empty message="NO DAYS TO SHOW YET. A DAY APPEARS AFTER 3:35 PM IST ON A TRADING DAY" />
+        <Empty message="NO DAYS TO SHOW YET. A DAY APPEARS ONCE THE MORNING RUN HAS FINISHED, ON A TRADING DAY" />
       </Panel>
     )
   }
 
-  // Today never appears before 3:35 PM India time (the database publishes a day only after the close). Say so, so an old
+  // A day's picks are published once its morning run has finished (about 9:40 AM IST); its results (profit/loss) only after
+  // the close. So if the newest published day is not today, today's run has not finished yet: say so, so an older
   // "latest day" is not mistaken for a fault.
   const today = todayISO()
+  const noteStyle = { marginBottom: 12, padding: '10px 14px', border: '1px solid var(--border-b)', borderRadius: 3, background: 'var(--cyan-s)', fontSize: 11, lineHeight: 1.6, color: 'var(--text)' }
   const showingLatest = nextDate === null && date < today && !isWeekendIST(today)
   const todayNote = showingLatest ? (
-    <div role="note" style={{ marginBottom: 12, padding: '10px 14px', border: '1px solid var(--border-b)', borderRadius: 3, background: 'var(--cyan-s)', fontSize: 11, lineHeight: 1.6, color: 'var(--text)' }}>
-      {isAfterMarketClose()
-        ? `Today (${longDate(today)}) is not published yet. A day appears once the market has closed and its results are settled, usually a few minutes after 3:40 PM IST. This is the latest published day.`
-        : `Today (${longDate(today)}) appears here after 3:35 PM IST, once the market has closed. This is the latest published day.`}
+    <div role="note" style={noteStyle}>
+      {`Today (${longDate(today)}) is not published yet. A day's picks appear once the morning run has finished (about 9:40 AM IST), and its results after the market closes (3:35 PM IST). This is the latest published day.`}
+    </div>
+  ) : null
+  const resultsPending = date === today && run?.status === 'finished' && !equityRow
+  const pendingNote = resultsPending ? (
+    <div role="note" style={noteStyle}>
+      {"Today's picks are live. The results (profit or loss) are added after the market closes, from about 3:40 PM IST."}
     </div>
   ) : null
 
@@ -36,7 +42,7 @@ export default function DayTab({ data }) {
         {bar}
         {todayNote}
         <Panel title={longDate(date).toUpperCase()}>
-          <Empty message="NOTHING PUBLISHED FOR THIS DATE. A DAY APPEARS AFTER 3:35 PM IST ON A TRADING DAY" />
+          <Empty message="NOTHING PUBLISHED FOR THIS DATE. A DAY APPEARS ONCE THE MORNING RUN HAS FINISHED, ON A TRADING DAY" />
         </Panel>
       </>
     )
@@ -61,6 +67,7 @@ export default function DayTab({ data }) {
     <>
       {bar}
       {todayNote}
+      {pendingNote}
       <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--muted)', letterSpacing: 2, marginBottom: 12 }}>
         {longDate(date).toUpperCase()}
       </div>
