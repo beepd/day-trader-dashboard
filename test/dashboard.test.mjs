@@ -120,6 +120,36 @@ check('verdict labels', m.verdictLabel(null).text === 'NO VERDICT' && m.verdictL
 const stats = m.dayStats({ run: { universe_size: null, passed_screen: null }, equityRow: null, candidates: [1, 2, 3], verdicts: [{ on_watchlist: true }, { on_watchlist: false }], plans: [{ status: 'accepted' }, { status: 'skipped' }] })
 check('day numbers fall back sensibly (100 checked, moving = candidates, P&L pending)', stats.checked === 100 && stats.moving === 3 && stats.strong === 1 && stats.trades === 1 && stats.pnl === null)
 
+// --- skipped stocks (the "what did we pass on" table)
+const sk = m.skippedStocks({
+  candidates: [{ symbol: 'AAA', rank: 1 }, { symbol: 'BBB', rank: 2 }, { symbol: 'CCC', rank: 3 }, { symbol: 'DDD', rank: 4 }, { symbol: 'EEE', rank: 5 }],
+  verdicts: [
+    { symbol: 'AAA', has_catalyst: true, strength: 'strong', on_watchlist: true, checklist_notes: null },
+    { symbol: 'BBB', has_catalyst: true, strength: 'strong', on_watchlist: false, checklist_notes: 'strong by the rules, but dropped by the sector rule: same sector as AAA' },
+    { symbol: 'CCC', has_catalyst: false, strength: 'weak', on_watchlist: false, checklist_notes: null },
+    { symbol: 'DDD', has_catalyst: true, strength: 'weak', on_watchlist: false, checklist_notes: null },
+  ],
+  plans: [{ symbol: 'AAA', status: 'accepted' }, { symbol: 'EEE', status: 'rejected', rejection_reason: 'not enough cash left' }],
+  outcomes: [
+    { symbol: 'AAA', return_pct: '3', std_outcome: 'target_hit' },
+    { symbol: 'BBB', return_pct: '2.5', max_up_pct: '2.6', max_down_pct: '-0.1', std_outcome: 'target_hit', std_return_pct: '2.4' },
+    { symbol: 'CCC', return_pct: '-1.2', std_outcome: 'stop_hit', std_return_pct: '-0.9' },
+    { symbol: 'DDD', return_pct: '0.4', std_outcome: 'closed_at_end', std_return_pct: '0.4' },
+    { symbol: 'EEE', return_pct: null, std_outcome: null },
+    { symbol: 'ZZZ', return_pct: '1.0' },
+  ],
+})
+check('skipped: the traded stock is left out, the rest are listed best mover first, a missing return goes last', sk.rows.map((r) => r.symbol).join() === 'BBB,ZZZ,DDD,CCC,EEE', sk.rows.map((r) => r.symbol).join())
+check('skipped: counts how many of them rose (BBB, DDD and ZZZ = 3 of 5)', sk.rows.length === 5 && sk.rose === 3, `${sk.rows.length} ${sk.rose}`)
+const bbb = sk.rows.find((r) => r.symbol === 'BBB')
+check('skipped: numbers come through as numbers', bbb.returnPct === 2.5 && bbb.maxUpPct === 2.6 && bbb.maxDownPct === -0.1 && bbb.whatIfReturnPct === 2.4 && bbb.whatIfOutcome === 'target_hit' && bbb.rank === 2)
+check('skipped: a strong stock dropped by a rule shows the rule as the reason', bbb.why.includes('sector rule'), bbb.why)
+check('skipped: no catalyst gives a plain reason', sk.rows.find((r) => r.symbol === 'CCC').why === 'No real reason for the move was found in the news')
+check('skipped: weak news gives a plain reason', sk.rows.find((r) => r.symbol === 'DDD').why === 'The news was judged weak, not strong enough to act on')
+check('skipped: a rejected plan shows its own rejection reason', sk.rows.find((r) => r.symbol === 'EEE').why === 'not enough cash left')
+check('skipped: a stock with no verdict still gets a reason', sk.rows.find((r) => r.symbol === 'ZZZ').why === 'No verdict was recorded')
+check('skipped: no outcomes (before the close) gives no rows', m.skippedStocks({ candidates: [], verdicts: [], plans: [], outcomes: [] }).rows.length === 0 && m.skippedStocks({}).rose === 0)
+
 // ------------------------------------------------------------------ demo data
 console.log('\n-- demo data')
 const demo = getDemo()
@@ -181,6 +211,7 @@ check('days: neighbours skip nothing that has a record (prev = holiday row, no n
 check('days: only that day\'s stocks, in rank order', day.candidates.map((c) => c.symbol).join() === 'ITC,INFY,WIPRO')
 check('days: headlines in position order', day.headlines.map((h) => h.position).join() === '1,2')
 check('days: verdicts, plans and the day\'s balance row', day.verdicts.length === 1 && day.plans.length === 1 && day.equityRow.pnl === -300)
+check('days: the day\'s outcomes come with it, only for that date', day.outcomes.length === 3 && day.outcomes.every((o) => o.market_date === '2026-10-09'), JSON.stringify(day.outcomes.map((o) => o.symbol)))
 
 const before = fake.log.length
 day = await q.getDaysData('2026-10-08')
@@ -200,6 +231,19 @@ check('blog: no published posts is an empty list', (await q.getBlogPosts()).leng
 fake.state.failing.add('public_blog_posts')
 check('blog: an error there just means no posts', (await q.getBlogPosts()).length === 0)
 fake.state.failing.delete('public_blog_posts')
+
+fake.state.failing.add('public_candidate_outcomes')
+const outcomeErrors = []
+const savedConsoleError = console.error
+console.error = (...args) => outcomeErrors.push(args.join(' '))
+const noOutcomes = await q.getDaysData('2026-10-09')
+console.error = savedConsoleError
+check('outcomes: if they cannot be loaded, the rest of the day still loads and the skipped table is simply missing', noOutcomes.outcomes.length === 0 && noOutcomes.candidates.length === 3 && noOutcomes.plans.length === 1)
+check('outcomes: the failure is logged with only its code and view, never the server text', outcomeErrors.length === 1 && outcomeErrors[0].includes('XX000') && outcomeErrors[0].includes('public_candidate_outcomes') && !outcomeErrors[0].includes('SECRET'), outcomeErrors.join('|'))
+fake.state.failing.delete('public_candidate_outcomes')
+fake.state.empty.add('public_candidate_outcomes')
+check('outcomes: before the close the view has no rows, so the day loads with an empty list', (await q.getDaysData('2026-10-09')).outcomes.length === 0)
+fake.state.empty.delete('public_candidate_outcomes')
 
 fake.state.failing.add('public_plans')
 const loudErrors = []
@@ -222,7 +266,7 @@ console.log('\n-- security: what the dashboard asked the server for')
 check('every request went to a public_* view', fake.log.every((r) => /^\/rest\/v1\/public_[a-z_]+$/.test(r.path)), [...new Set(fake.log.map((r) => r.path))].join())
 check('every request used the publishable key and nothing else', fake.log.every((r) => r.apikey === KEY && r.authorization === `Bearer ${KEY}`))
 const viewsUsed = new Set(fake.log.map((r) => r.path.split('/').pop()))
-check('all seven views were exercised', ['public_runs', 'public_daily_equity', 'public_trades', 'public_candidates', 'public_headlines', 'public_verdicts', 'public_plans'].every((v) => viewsUsed.has(v)), [...viewsUsed].join())
+check('all eight views were exercised', ['public_runs', 'public_daily_equity', 'public_trades', 'public_candidates', 'public_headlines', 'public_verdicts', 'public_plans', 'public_candidate_outcomes'].every((v) => viewsUsed.has(v)), [...viewsUsed].join())
 
 // ------------------------------------------------------------------ demo mode
 console.log('\n-- demo mode')
@@ -235,6 +279,9 @@ check('demo mode never calls Supabase', fake.log.length === askedBefore)
 check('demo overview and newest day work', demoOverview.equity.length === demo.equity.length && demoDay.date === lastDemoRun.market_date)
 check('demo overview has funnel totals that only ever shrink', demoOverview.funnel.screened >= demoOverview.funnel.withReason && demoOverview.funnel.withReason >= demoOverview.funnel.strong && demoOverview.funnel.strong >= demoOverview.funnel.traded && demoOverview.funnel.traded === demo.trades.length, JSON.stringify(demoOverview.funnel))
 check('demo day has neighbours', demoDay.prevDate !== null && demoDay.nextDate === null)
+const demoDetail = Object.values(demo.details)
+check('demo outcomes: one per stock that was not traded, never for a traded one', demoDetail.every((d) => d.outcomes.length === d.candidates.length - d.plans.filter((p) => p.status === 'accepted').length && d.outcomes.every((o) => !d.plans.some((p) => p.symbol === o.symbol && p.status === 'accepted'))))
+check('demo skipped table builds for the newest day and is sorted best first', (() => { const t = m.skippedStocks(demoDay); return t.rows.length === demoDay.outcomes.length && t.rows.every((r, i) => i === 0 || t.rows[i - 1].returnPct >= r.returnPct) })())
 delete process.env.DASHBOARD_DEMO
 
 await fake.close()

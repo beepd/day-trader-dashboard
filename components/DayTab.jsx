@@ -2,11 +2,12 @@ import DateBar from './DateBar'
 import MetricCard from './MetricCard'
 import Panel, { Empty } from './Panel'
 import CandidateList from './CandidateList'
-import { dayStats } from '../lib/metrics'
+import SkippedTable from './SkippedTable'
+import { dayStats, skippedStocks } from '../lib/metrics'
 import { fmtPnl, getMarketClosedInfo, longDate, todayISO, isWeekendIST } from '../lib/utils'
 
 export default function DayTab({ data }) {
-  const { date, run, equityRow, prevDate, nextDate, candidates, headlines, verdicts, plans } = data
+  const { date, run, equityRow, prevDate, nextDate, candidates, headlines, verdicts, plans, outcomes = [] } = data
 
   if (!date) {
     return (
@@ -61,6 +62,8 @@ export default function DayTab({ data }) {
   }
 
   const s = dayStats({ run, equityRow, candidates, verdicts, plans })
+  // Outcomes exist only after the close; before that (or if they could not be loaded) the table is left out rather than shown empty.
+  const skipped = skippedStocks({ candidates, verdicts, plans, outcomes })
   const pnlColor = s.pnl === null ? undefined : s.pnl > 0 ? 'var(--green)' : s.pnl < 0 ? 'var(--red)' : undefined
 
   return (
@@ -78,6 +81,12 @@ export default function DayTab({ data }) {
         <MetricCard label="TRADES" value={s.trades} sub="accepted plans" accent="var(--amber)" />
         <MetricCard label="DAY PROFIT / LOSS" value={s.pnl === null ? 'pending' : fmtPnl(s.pnl)} sub="after settlement" accent="var(--green)" valueColor={pnlColor} />
       </div>
+
+      {skipped.rows.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <SkippedTable skipped={skipped} />
+        </div>
+      )}
 
       {candidates.length ? (
         <CandidateList candidates={candidates} headlines={headlines} verdicts={verdicts} plans={plans} />

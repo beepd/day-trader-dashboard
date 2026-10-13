@@ -36,6 +36,11 @@ export const FIXTURE = {
     { market_date: '2026-10-07', run_id: 1, symbol: 'ABB', status: 'accepted', rejection_reason: null, entry: 5000, stop: 4950, target: 5075, shares: 5, cost: 25000, outcome: 'target_hit', exit_price: 5100, pnl: 500 },
     { market_date: '2026-10-09', run_id: 3, symbol: 'ITC', status: 'accepted', rejection_reason: null, entry: 400, stop: 396, target: 406, shares: 50, cost: 20000, outcome: 'stop_hit', exit_price: 394, pnl: -300 },
   ],
+  public_candidate_outcomes: [
+    { market_date: '2026-10-09', run_id: 3, symbol: 'ITC', entry_price: 400, close_price: 394, return_pct: -1.5, max_up_pct: 0.4, max_down_pct: -1.6, std_outcome: 'stop_hit', std_return_pct: -0.8 },
+    { market_date: '2026-10-09', run_id: 3, symbol: 'INFY', entry_price: 1500, close_price: 1530, return_pct: 2, max_up_pct: 2.4, max_down_pct: -0.3, std_outcome: 'target_hit', std_return_pct: 2.1 },
+    { market_date: '2026-10-09', run_id: 3, symbol: 'WIPRO', entry_price: 250, close_price: 248.75, return_pct: -0.5, max_up_pct: 0.9, max_down_pct: -0.7, std_outcome: 'closed_at_end', std_return_pct: -0.5 },
+  ],
   public_blog_posts: [],
 }
 
