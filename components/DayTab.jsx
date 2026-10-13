@@ -82,18 +82,18 @@ export default function DayTab({ data }) {
         <MetricCard label="DAY PROFIT / LOSS" value={s.pnl === null ? 'pending' : fmtPnl(s.pnl)} sub="after settlement" accent="var(--green)" valueColor={pnlColor} />
       </div>
 
-      {skipped.rows.length > 0 && (
-        <div style={{ marginBottom: 20 }}>
-          <SkippedTable skipped={skipped} />
-        </div>
-      )}
-
       {candidates.length ? (
         <CandidateList candidates={candidates} headlines={headlines} verdicts={verdicts} plans={plans} />
       ) : (
         <Panel title="WHAT THE APP LOOKED AT">
           <Empty message="NOTHING WAS MOVING ENOUGH THAT DAY, SO THE APP STOPPED BEFORE LOOKING AT ANY NEWS" />
         </Panel>
+      )}
+
+      {skipped.rows.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <SkippedTable skipped={skipped} />
+        </div>
       )}
     </>
   )

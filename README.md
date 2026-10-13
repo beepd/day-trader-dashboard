@@ -17,14 +17,14 @@ Five sections, chosen with `?tab=` in the address so every view is a shareable l
 | Section | Address | Reads |
 |---|---|---|
 | Overview: balance, return, win rate, worst drop; charts for balance over time, strategy vs the Nifty, drop from the peak, profit/loss per day, how trades ended, result by kind of news, headline-to-trade funnel, day-by-day calendar | `/` | `public_daily_equity`, `public_trades`, and row counts from `public_candidates`, `public_verdicts`, `public_plans` (for the funnel) |
-| Day by day: what the app looked at, the verdict and headlines for each stock, the plan and its result | `/?tab=days&date=2026-10-09` | `public_runs`, `public_daily_equity`, `public_candidates`, `public_headlines`, `public_verdicts`, `public_plans` |
+| Day by day: what the app looked at, the verdict and headlines for each stock, the plan and its result; below that, after the close, a table of the stocks the app skipped and how they did (move, high, low, what-if trade, why skipped) | `/?tab=days&date=2026-10-09` | `public_runs`, `public_daily_equity`, `public_candidates`, `public_headlines`, `public_verdicts`, `public_plans`, `public_candidate_outcomes` |
 | All trades: filter by outcome, download CSV | `/?tab=trades` | `public_trades` |
 | Blog: the **BLOG** tab opens the blog site directly. The old `/?tab=blog` address still shows a short page with the link, plus any posts marked published | `/?tab=blog` | `public_blog_posts` |
 | About | `/?tab=about` | nothing |
 
 A day's picks (what the app looked at, the verdicts and the plans) appear once the morning run has finished, about 9:40 AM India
 time. Its results (profit or loss, the balance, the trades) appear only after 3:35 PM. The views enforce this, not this site (it needs
-`migration_010` from the trading repo). Without a date, *Day by day* opens the newest published day.
+`migration_010` from the trading repo). The skipped-stocks table needs `migration_011`, shows only after the close, and is simply left out if its view is missing. Without a date, *Day by day* opens the newest published day.
 
 ## Setup
 
@@ -58,7 +58,7 @@ nothing here needs to reach the browser, because the pages are fetched on the se
 - CSV cells that start with `=`, `+`, `-` or `@` are protected, so a spreadsheet never runs them as a formula.
 - No secrets and no server addresses belong in this repo. `.env.local` is git-ignored.
 
-The views come from the trading app's SQL migrations (`migration_002`, `003`, `007` and later). Run those on the
+The views come from the trading app's SQL migrations (`migration_002`, `003`, `007` and later, including `011` for `public_candidate_outcomes`). Run those on the
 Supabase project this site points at.
 
 ## Tests
