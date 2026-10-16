@@ -115,6 +115,7 @@ check('calendar: month labels appear when the month changes; biggest result sets
 const calShort = m.calendarWeeks(equity, 1)
 check('calendar: limiting to the latest week says it was cut', calShort.weeks.length === 1 && calShort.truncated === true && cal.truncated === false)
 
+check('verdict colours: strong-not-selected (blue) differs from weak-not-selected (amber), watchlist and no-catalyst', m.verdictLabel({ has_catalyst: true, strength: 'strong' }).tone === 'blue' && m.verdictLabel({ has_catalyst: true, strength: 'STRONG' }).tone === 'blue' && m.verdictLabel({ has_catalyst: true, strength: 'weak' }).tone === 'amber' && m.verdictLabel({ has_catalyst: true }).tone === 'amber' && new Set([m.verdictLabel({ on_watchlist: true }).tone, m.verdictLabel({ has_catalyst: true, strength: 'strong' }).tone, m.verdictLabel({ has_catalyst: true, strength: 'weak' }).tone, m.verdictLabel({ has_catalyst: false }).tone]).size === 4)
 check('verdict labels', m.verdictLabel(null).text === 'NO VERDICT' && m.verdictLabel({ on_watchlist: true }).tone === 'green' &&
   m.verdictLabel({ has_catalyst: true, strength: 'weak' }).text === 'CATALYST WEAK · NOT SELECTED' && m.verdictLabel({ has_catalyst: false }).tone === 'red')
 const stats = m.dayStats({ run: { universe_size: null, passed_screen: null }, equityRow: null, candidates: [1, 2, 3], verdicts: [{ on_watchlist: true }, { on_watchlist: false }], plans: [{ status: 'accepted' }, { status: 'skipped' }] })
