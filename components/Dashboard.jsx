@@ -30,8 +30,9 @@ export default function Dashboard({ tab, data, failed, demo, blogUrl }) {
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 8px var(--green)', animation: 'pulse 1.5s infinite' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Logo mark (public/logo-mark.svg). Decorative: the site name is the heading right next to it. */}
+          <img src="/logo-mark.svg" alt="" width={40} height={40} style={{ display: 'block', flexShrink: 0 }} />
           <div>
             <h1 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 400, color: 'var(--text)', letterSpacing: 2 }}>{SITE_NAME.toUpperCase()}</h1>
             <div style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: 3, marginTop: 2 }}>AGENTIC AI · NSE INTRADAY SIMULATION</div>
