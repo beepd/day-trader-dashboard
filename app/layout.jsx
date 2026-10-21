@@ -1,5 +1,6 @@
 import './globals.css'
 import ChartLoader from '../components/ChartLoader'
+import Analytics from '../components/Analytics'
 import { SITE_TITLE, SITE_DESCRIPTION, SITE_URL } from '../lib/site'
 
 export const metadata = {
@@ -17,6 +18,8 @@ export default function RootLayout({ children }) {
       <body>
         {/* Chart.js, loaded once for the whole site (beforeInteractive scripts belong in the root layout) */}
         <ChartLoader />
+        {/* Google Analytics: only active when NEXT_PUBLIC_GA_ID is set */}
+        <Analytics />
         {children}
       </body>
     </html>
